@@ -7,10 +7,15 @@ app.set("view engine", "ejs");
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com"
-};
+};  
 
 app.get("/", (req, res) => {
   res.send("Hello!");
+});
+
+app.get("/urls", (req, res) => {
+
+  res.render("urls_index", { urlDatabase } );
 });
 
 app.get("/hello", (req, res) => {
