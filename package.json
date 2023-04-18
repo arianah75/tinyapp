@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/arianah75/tinyapp/issues"
   },
-  "homepage": "https://github.com/arianah75/tinyapp#readme"
+  "homepage": "https://github.com/arianah75/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
 }
