@@ -35,8 +35,12 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+app.post("/urls/:id/delete", (req,res) => {
+delete urlDatabase[req.params.id];
+res.redirect("/urls");
+});
 
-//redirect to longURL when short URL is used. @ victor 
+//redirect to longURL when short URL is used.
 app.get("/u/:id", (req, res) => {
   const longURL= urlDatabase[req.params.id];
   res.redirect(longURL);
