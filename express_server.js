@@ -30,9 +30,9 @@ app.use(express.urlencoded({ extended: true }));
 // POST route to receive form submission and save longURL and shortURL to urlDatabase
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
-  const shortURL = generateRandomString();
-  urlDatabase[shortURL] = longURL;
-  res.redirect(`/urls/${shortURL}`);
+  const id = generateRandomString();
+  urlDatabase[id] = longURL;
+  res.redirect(`/urls/${id}`);
 });
 
 app.post("/urls/:id/delete", (req,res) => {
@@ -40,11 +40,22 @@ delete urlDatabase[req.params.id];
 res.redirect("/urls");
 });
 
+
+app.post('/urls/:id', (req, res) => {
+  const id = req.params.id;
+  const longURL = req.body.longURL;
+  urlDatabase[id] = longURL;
+  res.redirect('/urls');
+});
+
 //redirect to longURL when short URL is used.
 app.get("/u/:id", (req, res) => {
   const longURL= urlDatabase[req.params.id];
   res.redirect(longURL);
 });
+
+
+
 
 // app.get("/", (req, res) => {
 //   res.send("Hello!");
