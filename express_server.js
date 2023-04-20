@@ -14,6 +14,17 @@ function generateRandomString() {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+};
+
+
+function getUserByEmail(email, users) {
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return null;
 }
 
 const urlDatabase = {
@@ -57,12 +68,16 @@ app.post('/logout', (req, res) => {
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
 
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      res.status(400).send('Email already registered.');
-      return;
-    }
+  if (!email || !password) {
+    res.status(400).send('Email and password cannot be empty.');
+    return;
+  }
+
+  const userFound = getUserByEmail(email, users);
+
+  if (userFound) {
+    res.status(400).send('Email already registered.');
+    return;
   }
 
   const userRandomID = generateRandomString();
