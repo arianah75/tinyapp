@@ -44,6 +44,11 @@ app.post('/login', (req, res) => {
   }
 });
 
+app.post('/logout', (req, res) => {
+  res.clearCookie('username');
+  res.redirect('/urls');
+});
+
 // POST route to receive form submission and save longURL and shortURL to urlDatabase
 app.post("/urls", (req, res) => {
   const longURL = req.body.longURL;
@@ -73,30 +78,31 @@ app.get("/u/:id", (req, res) => {
 
 
 
-
-// app.get("/", (req, res) => {
-//   res.send("Hello!");
-// });
-
 app.get("/urls", (req, res) => {
-
-  res.render("urls_index", { urlDatabase } );
+  const templateVars = {
+    urlDatabase: urlDatabase,
+    username: req.cookies["username"],
+  };
+  res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  const templateVars = {
+    username: req.cookies["username"],
+  };
+  res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id,
-  longURL: urlDatabase[req.params.id] };
-
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    username: req.cookies["username"],
+  };
   res.render("urls_show", templateVars);
 });
 
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
+
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);

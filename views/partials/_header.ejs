@@ -17,10 +17,17 @@
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
       </div>
-      <!-- login and password -->
-      <form method="POST" action="/login" class="form-inline ml-auto">
-        <input type="text" name="username" name="username" placeholder="Username" required>
-        <button type="submit" >Log In</button>
+      <% if (username) { %>
+        <span class="navbar-text ml-auto">Welcome, <%= username %>!</span>
+        <form method="POST" action="/logout" class="form-inline">
+          <button type="submit">Log Out</button>
+        </form>
+      <% } else { %>
+        <form method="POST" action="/login" class="form-inline ml-auto">
+          <input type="text" name="username" placeholder="Username" required>
+          <button type="submit">Log In</button>
+        </form>
+      <% } %>
     </div>
   </nav>
 </header>
