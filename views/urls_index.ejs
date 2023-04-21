@@ -33,7 +33,7 @@
           <% for (let id in urlDatabase) { %>
             <tr>
               <td><%= id %></td>
-              <td><%= urlDatabase[id] %></td>
+              <td><%= urlDatabase[id].longURL %></td>
               <td>
                 <a href="/urls/<%= id %>" class="btn btn-primary">Edit</a>
               </td>              
