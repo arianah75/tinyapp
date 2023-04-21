@@ -45,10 +45,11 @@ const urlDatabase = {
 
 // Login page
 app.get("/login", (req, res) => {
-  if (req.session.user_id) {
+  const userId = req.session.user_id;
+  const user = users[userId];
+  if (user) {
     return res.redirect("/urls");
   }
-  const user = users[req.session.user_id];
   const templateVars = {
     user: user,
   };
@@ -132,9 +133,8 @@ app.get("/urls", (req, res) => {
   const user = users[userId];
 
   if (!user) {
-    return res.redirect("/login");
+    return res.status(401).send("Please log in to view your URLs.");
   }
-
   const userUrls = urlsForUser(userId, urlDatabase);
   const templateVars = {
     urls: userUrls,
