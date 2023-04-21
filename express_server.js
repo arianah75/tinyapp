@@ -197,7 +197,7 @@ app.get("/urls/:id", (req, res) => {
   const urlId = req.params.id;
 
   if (!userId) {
-    return res.status(401).send("Please log in to ed this URL.");
+    return res.status(401).send("Please log in to see this URL.");
   }
 
   if (!urlDatabase[urlId]) {
