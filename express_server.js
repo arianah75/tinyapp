@@ -163,8 +163,8 @@ app.get("/urls/:shortURL", (req, res) => {
   const shortURL = req.params.shortURL;
   const urlData = urlDatabase[shortURL];
 
-  if (!urlData || urlData.userID !== userId) {
-    return res.status(403).send("Unauthorized access.");
+  if (!urlData) {
+    return res.status(404).send("URL not found.");
   }
 
   const user = users[userId];
