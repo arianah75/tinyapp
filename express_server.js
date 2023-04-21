@@ -53,24 +53,23 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
-app.post("/login", (req, res) => {
+app.post('/login', (req, res) => {
   const { email, password } = req.body;
 
-  for (const userId in users) {
-    const user = users[userId];
-
-    if (user.email === email && user.password === password) {
-      res.cookie("user_id", userId);
-      res.redirect("/urls");
-      return;
-    }
+  const userFound = getUserByEmail(email, users);
+  
+  if (!userFound || userFound.password !== password) {
+    res.status(403).send('Incorrect email or password.');
+    return;
   }
-  res.status(401).send("Incorrect email or password.");
+  
+  res.cookie('user_id', userFound.id);
+  res.redirect('/urls');
 });
 
-app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
-  res.redirect("/urls");
+app.post('/logout', (req, res) => {
+  res.clearCookie('user_id');
+  res.redirect('/login');
 });
 
 app.get("/register", (req, res) => {
