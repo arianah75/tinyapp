@@ -144,9 +144,25 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  delete urlDatabase[req.params.id];
+  const userId = req.cookies["user_id"];
+  const urlId = req.params.id;
+
+  if (!userId) {
+    return res.status(401).send("Please log in to delete this URL.");
+  }
+
+  if (!urlDatabase[urlId]) {
+    return res.status(404).send("URL not found.");
+  }
+
+  if (urlDatabase[urlId].userID !== userId) {
+    return res.status(403).send("You do not have permission to delete this URL.");
+  }
+
+  delete urlDatabase[urlId];
   res.redirect("/urls");
 });
+
 
 app.get('/u/:id', (req, res) => {
   const shortURL = req.params.id;
@@ -174,24 +190,26 @@ app.post("/urls/:id", (req, res) => {
 
 app.get("/urls", (req, res) => {
   const userId = req.cookies["user_id"];
+
   if (!userId) {
-    return res.status(401).send("Please log in or register to view URLs.");
+    return res.send("Please log in or register to see your URLs.");
   }
+
   const user = users[userId];
+  const userUrls = urlsForUser(userId);
   const templateVars = {
-    urlDatabase: urlDatabase,
+    urlDatabase: userUrls,
     user: user,
   };
   res.render("urls_index", templateVars);
 });
-
 
 app.get("/urls/:id", (req, res) => {
   const userId = req.cookies["user_id"];
   const urlId = req.params.id;
 
   if (!userId) {
-    return res.status(401).send("Please log in to view this URL.");
+    return res.status(401).send("Please log in to ed this URL.");
   }
 
   if (!urlDatabase[urlId]) {
