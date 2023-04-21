@@ -3,12 +3,16 @@ const app = express();
 const PORT = 8080;
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const { getUserByEmail, urlsForUser, generateRandomString } = require('./helper');
+
 
 app.set("view engine", "ejs");
-app.use(cookieSession({
-  name: 'session',
-  keys: ['key1', 'key2']
-}));
+app.use(
+  cookieSession({
+    name: "session",
+    keys: ["key1", "key2"],
+  })
+);
 app.use(express.urlencoded({ extended: true }));
 
 const users = {
@@ -33,36 +37,6 @@ const urlDatabase = {
     longURL: "https://www.google.ca",
     userID: "user2RandomID",
   },
-};
-
-function generateRandomString() {
-  const chars =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let result = "";
-  for (let i = 0; i < 6; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
-function urlsForUser(id) {
-  const userUrls = {};
-  for (const urlId in urlDatabase) {
-    if (urlDatabase[urlId].userID === id) {
-      userUrls[urlId] = urlDatabase[urlId];
-    }
-  }
-  return userUrls;
-};
-
-function getUserByEmail(email, users) {
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null;
 };
 
 app.get("/login", (req, res) => {
@@ -210,7 +184,7 @@ app.get("/urls", (req, res) => {
   }
 
   const user = users[userId];
-  const userUrls = urlsForUser(userId);
+  const userUrls = urlsForUser(userId, urlDatabase);
   const templateVars = {
     urlDatabase: userUrls,
     user: user,
