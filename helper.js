@@ -5,7 +5,7 @@ const getUserByEmail = function(email, users) {
       return user;
     }
   }
-  return null;
+  return undefined;
 };
 
 const urlsForUser = function(id, urlDatabase) {
