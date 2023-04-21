@@ -3,8 +3,11 @@ const app = express();
 const PORT = 8080;
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
-const { getUserByEmail, urlsForUser, generateRandomString } = require('./helper');
-
+const {
+  getUserByEmail,
+  urlsForUser,
+  generateRandomString,
+} = require("./helper");
 
 app.set("view engine", "ejs");
 app.use(
@@ -15,16 +18,17 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 
+// Sample users and URL database
 const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur", //not supposted to work
+    password: "purple-monkey-dinosaur",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk", //not supposted to work
+    password: "dishwasher-funk",
   },
 };
 
@@ -39,6 +43,7 @@ const urlDatabase = {
   },
 };
 
+// Login page
 app.get("/login", (req, res) => {
   if (req.session.user_id) {
     return res.redirect("/urls");
@@ -50,13 +55,12 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
+// Login handler
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-
   const userFound = getUserByEmail(email, users);
 
   if (!userFound || !bcrypt.compareSync(password, userFound.password)) {
-    // use bcrypt.compareSync to check the password
     res.status(403).send("Incorrect email or password.");
     return;
   }
@@ -65,11 +69,13 @@ app.post("/login", (req, res) => {
   res.redirect("/urls");
 });
 
+// Logout handler
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
 
+// Registration page
 app.get("/register", (req, res) => {
   const userId = req.session.user_id;
   const user = users[userId];
@@ -79,6 +85,7 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
+// Registration handler
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
 
@@ -95,19 +102,19 @@ app.post("/register", (req, res) => {
   }
 
   const userRandomID = generateRandomString();
-
-  const hashedPassword = bcrypt.hashSync(password, 10); // hash the password
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   users[userRandomID] = {
     id: userRandomID,
     email: email,
-    password: hashedPassword, // save hashedPassword
+    password: hashedPassword,
   };
 
   req.session.user_id = userRandomID;
   res.redirect("/urls");
 });
 
+// Create new URL page
 app.get("/urls/new", (req, res) => {
   if (!req.session.user_id) {
     return res.redirect("/login");
@@ -119,112 +126,97 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-app.post("/urls", (req, res) => {
-  if (!req.session.user_id) {
-    return res.status(401).send("You must be logged in to shorten URLs.");
-  }
-  const longURL = req.body.longURL;
-  const id = generateRandomString();
-  urlDatabase[id] = {
-    longURL: longURL,
-    userID: req.session.user_id,
-  };
-  res.redirect(`/urls/${id}`);
-});
-
-app.post("/urls/:id/delete", (req, res) => {
-  const userId = req.session.user_id;
-  const urlId = req.params.id;
-
-  if (!userId) {
-    return res.status(401).send("Please log in to delete this URL.");
-  }
-
-  if (!urlDatabase[urlId]) {
-    return res.status(404).send("URL not found.");
-  }
-
-  if (urlDatabase[urlId].userID !== userId) {
-    return res
-      .status(403)
-      .send("You do not have permission to delete this URL.");
-  }
-
-  delete urlDatabase[urlId];
-  res.redirect("/urls");
-});
-
-app.get("/u/:id", (req, res) => {
-  const shortURL = req.params.id;
-  const urlObject = urlDatabase[shortURL];
-
-  if (!urlObject) {
-    return res.status(404).send("The requested short URL does not exist.");
-  }
-
-  // Redirect to the long URL if it exists
-  res.redirect(urlObject.longURL);
-});
-
-app.post("/urls/:id", (req, res) => {
-  const id = req.params.id;
-  const longURL = req.body.longURL;
-  urlDatabase[id] = {
-    longURL: longURL,
-    userID: req.session.user_id,
-  };
-  res.redirect("/urls");
-});
-
+// URL list page
 app.get("/urls", (req, res) => {
   const userId = req.session.user_id;
+  const user = users[userId];
 
-  if (!userId) {
-    return res.send("Please log in or register to see your URLs.");
+  if (!user) {
+    return res.redirect("/login");
   }
 
-  const user = users[userId];
   const userUrls = urlsForUser(userId, urlDatabase);
   const templateVars = {
-    urlDatabase: userUrls,
+    urls: userUrls,
     user: user,
   };
   res.render("urls_index", templateVars);
 });
 
-app.get("/urls/:id", (req, res) => {
+// Add new URL handler
+app.post("/urls", (req, res) => {
   const userId = req.session.user_id;
-  const urlId = req.params.id;
+  const longURL = req.body.longURL;
+  const shortURL = generateRandomString();
 
-  if (!userId) {
-    return res.status(401).send("Please log in to see this URL.");
-  }
+  urlDatabase[shortURL] = {
+    longURL: longURL,
+    userID: userId,
+  };
 
-  if (!urlDatabase[urlId]) {
-    return res.status(404).send("URL not found.");
-  }
+  res.redirect(`/urls/${shortURL}`);
+});
 
-  if (urlDatabase[urlId].userID !== userId) {
-    return res.status(403).send("You do not have permission to view this URL.");
+// URL edit page
+app.get("/urls/:shortURL", (req, res) => {
+  const userId = req.session.user_id;
+  const shortURL = req.params.shortURL;
+  const urlData = urlDatabase[shortURL];
+
+  if (!urlData || urlData.userID !== userId) {
+    return res.status(403).send("Unauthorized access.");
   }
 
   const user = users[userId];
   const templateVars = {
-    id: urlId,
-    longURL: urlDatabase[urlId].longURL,
+    shortURL: shortURL,
+    longURL: urlData.longURL,
     user: user,
   };
+
   res.render("urls_show", templateVars);
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
+// Update URL handler
+app.post("/urls/:shortURL", (req, res) => {
+  const userId = req.session.user_id;
+  const shortURL = req.params.shortURL;
+  const urlData = urlDatabase[shortURL];
+
+  if (urlData.userID !== userId) {
+    return res.status(403).send("Unauthorized access.");
+  }
+
+  urlData.longURL = req.body.longURL;
+  res.redirect("/urls");
 });
 
-app.get("/users", (req, res) => {
-  res.json(users);
+// Delete URL handler
+app.post("/urls/:shortURL/delete", (req, res) => {
+  const userId = req.session.user_id;
+  const shortURL = req.params.shortURL;
+  const urlData = urlDatabase[shortURL];
+
+  if (urlData.userID !== userId) {
+    return res.status(403).send("Unauthorized access.");
+  }
+
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
 });
 
+// URL redirection
+app.get("/u/:shortURL", (req, res) => {
+  const urlData = urlDatabase[req.params.shortURL];
+
+  if (!urlData) {
+    return res.status(404).send("URL not found.");
+  }
+
+  res.redirect(urlData.longURL);
+});
+
+// Server start
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
