@@ -169,7 +169,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
   const user = users[userId];
   const templateVars = {
-    shortURL: shortURL,
+    id: shortURL,
     longURL: urlData.longURL,
     user: user,
   };
@@ -214,6 +214,15 @@ app.get("/u/:shortURL", (req, res) => {
   }
 
   res.redirect(urlData.longURL);
+});
+
+// Redirect when we have no endpoint
+app.get("/", (req, res) => {
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 // Server start
