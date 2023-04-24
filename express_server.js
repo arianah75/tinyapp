@@ -146,6 +146,11 @@ app.get("/urls", (req, res) => {
 // Add new URL handler
 app.post("/urls", (req, res) => {
   const userId = req.session.user_id;
+
+  if (!userId) {
+    return res.status(401).send("Please log in to create a new URL.");
+  }
+
   const longURL = req.body.longURL;
   const shortURL = generateRandomString();
 
@@ -157,6 +162,7 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
+
 // URL edit page
 app.get("/urls/:shortURL", (req, res) => {
   const userId = req.session.user_id;
@@ -165,6 +171,14 @@ app.get("/urls/:shortURL", (req, res) => {
 
   if (!urlData) {
     return res.status(404).send("URL not found.");
+  }
+
+  if (!userId) {
+    return res.status(401).send("Please log in to edit URLs.");
+  }
+
+  if (urlData.userID !== userId) {
+    return res.status(403).send("You do not have permission to edit this URL.");
   }
 
   const user = users[userId];
@@ -176,6 +190,7 @@ app.get("/urls/:shortURL", (req, res) => {
 
   res.render("urls_show", templateVars);
 });
+
 
 // Update URL handler
 app.post("/urls/:shortURL", (req, res) => {
