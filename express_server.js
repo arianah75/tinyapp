@@ -3,6 +3,7 @@ const app = express();
 const PORT = 8080;
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
+const { users, urlDatabase } = require("./db");
 const {
   getUserByEmail,
   urlsForUser,
@@ -18,31 +19,6 @@ app.use(
 );
 app.use(express.urlencoded({ extended: true }));
 
-// Sample users and URL database
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: "purple-monkey-dinosaur",
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
-};
-
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "userRandomID",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "user2RandomID",
-  },
-};
-
 // Login page
 app.get("/login", (req, res) => {
   const userId = req.session.user_id;
@@ -54,6 +30,92 @@ app.get("/login", (req, res) => {
     user: user,
   };
   res.render("login", templateVars);
+});
+
+// Registration page
+app.get("/register", (req, res) => {
+  const userId = req.session.user_id;
+  const user = users[userId];
+  const templateVars = {
+    user: user,
+  };
+  res.render("register", templateVars);
+});
+
+// Create new URL page
+app.get("/urls/new", (req, res) => {
+  if (!req.session.user_id) {
+    return res.redirect("/login");
+  }
+  const user = users[req.session.user_id];
+  const templateVars = {
+    user: user,
+  };
+  res.render("urls_new", templateVars);
+});
+
+// URL list page
+app.get("/urls", (req, res) => {
+  const userId = req.session.user_id;
+  const user = users[userId];
+
+  if (!user) {
+    return res.status(401).send("Please log in to view your URLs.");
+  }
+  const userUrls = urlsForUser(userId, urlDatabase);
+  const templateVars = {
+    urls: userUrls,
+    user: user,
+  };
+  res.render("urls_index", templateVars);
+});
+
+// URL edit page
+app.get("/urls/:shortURL", (req, res) => {
+  const userId = req.session.user_id;
+  const shortURL = req.params.shortURL;
+  const urlData = urlDatabase[shortURL];
+
+  if (!urlData) {
+    return res.status(404).send("URL not found.");
+  }
+
+  if (!userId) {
+    return res.status(401).send("Please log in to edit URLs.");
+  }
+
+  if (urlData.userID !== userId) {
+    return res.status(403).send("You do not have permission to edit this URL.");
+  }
+
+  const user = users[userId];
+  const templateVars = {
+    id: shortURL,
+    longURL: urlData.longURL,
+    user: user,
+  };
+
+  res.render("urls_show", templateVars);
+});
+
+// URL redirection
+app.get("/u/:shortURL", (req, res) => {
+  const urlData = urlDatabase[req.params.shortURL];
+
+  if (!urlData) {
+    return res.status(404).send("URL not found.");
+  }
+
+  res.redirect(urlData.longURL);
+});
+
+// Redirect when we have no endpoint
+app.get("/", (req, res) => {
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 // Login handler
@@ -74,16 +136,6 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
-});
-
-// Registration page
-app.get("/register", (req, res) => {
-  const userId = req.session.user_id;
-  const user = users[userId];
-  const templateVars = {
-    user: user,
-  };
-  res.render("register", templateVars);
 });
 
 // Registration handler
@@ -115,34 +167,6 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-// Create new URL page
-app.get("/urls/new", (req, res) => {
-  if (!req.session.user_id) {
-    return res.redirect("/login");
-  }
-  const user = users[req.session.user_id];
-  const templateVars = {
-    user: user,
-  };
-  res.render("urls_new", templateVars);
-});
-
-// URL list page
-app.get("/urls", (req, res) => {
-  const userId = req.session.user_id;
-  const user = users[userId];
-
-  if (!user) {
-    return res.status(401).send("Please log in to view your URLs.");
-  }
-  const userUrls = urlsForUser(userId, urlDatabase);
-  const templateVars = {
-    urls: userUrls,
-    user: user,
-  };
-  res.render("urls_index", templateVars);
-});
-
 // Add new URL handler
 app.post("/urls", (req, res) => {
   const userId = req.session.user_id;
@@ -161,36 +185,6 @@ app.post("/urls", (req, res) => {
 
   res.redirect(`/urls/${shortURL}`);
 });
-
-
-// URL edit page
-app.get("/urls/:shortURL", (req, res) => {
-  const userId = req.session.user_id;
-  const shortURL = req.params.shortURL;
-  const urlData = urlDatabase[shortURL];
-
-  if (!urlData) {
-    return res.status(404).send("URL not found.");
-  }
-
-  if (!userId) {
-    return res.status(401).send("Please log in to edit URLs.");
-  }
-
-  if (urlData.userID !== userId) {
-    return res.status(403).send("You do not have permission to edit this URL.");
-  }
-
-  const user = users[userId];
-  const templateVars = {
-    id: shortURL,
-    longURL: urlData.longURL,
-    user: user,
-  };
-
-  res.render("urls_show", templateVars);
-});
-
 
 // Update URL handler
 app.post("/urls/:shortURL", (req, res) => {
@@ -218,26 +212,6 @@ app.post("/urls/:shortURL/delete", (req, res) => {
 
   delete urlDatabase[shortURL];
   res.redirect("/urls");
-});
-
-// URL redirection
-app.get("/u/:shortURL", (req, res) => {
-  const urlData = urlDatabase[req.params.shortURL];
-
-  if (!urlData) {
-    return res.status(404).send("URL not found.");
-  }
-
-  res.redirect(urlData.longURL);
-});
-
-// Redirect when we have no endpoint
-app.get("/", (req, res) => {
-  if (req.session.user_id) {
-    res.redirect("/urls");
-  } else {
-    res.redirect("/login");
-  }
 });
 
 // Server start
