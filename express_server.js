@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const PORT = 8080;
+const PORT = 8080; // default port 8080
 const cookieSession = require("cookie-session");
 const bcrypt = require("bcryptjs");
 const { users, urlDatabase } = require("./db");
@@ -17,7 +17,7 @@ app.use(
     keys: ["key1", "key2"],
   })
 );
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true })); // middleware
 
 // Login page
 app.get("/login", (req, res) => {
