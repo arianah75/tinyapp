@@ -1,4 +1,4 @@
-const getUserByEmail = function(email, users) {
+const getUserByEmail = (email, users) => {
   for (const userId in users) {
     const user = users[userId];
     if (user.email === email) {
@@ -8,7 +8,7 @@ const getUserByEmail = function(email, users) {
   return undefined;
 };
 
-const urlsForUser = function(id, urlDatabase) {
+const urlsForUser = (id, urlDatabase) => {
   const userUrls = {};
   for (const urlId in urlDatabase) {
     if (urlDatabase[urlId].userID === id) {
@@ -19,7 +19,7 @@ const urlsForUser = function(id, urlDatabase) {
 };
 
 
-const generateRandomString = function() {
+const generateRandomString = () =>{
   const chars =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let result = "";
