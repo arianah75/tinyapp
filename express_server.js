@@ -4,7 +4,9 @@ const app = express();
 const PORT = 8080; // default port 8080
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
+// database
 const { users, urlDatabase } = require('./db');
+// helper functions
 const {
   getUserByEmail,
   urlsForUser,
