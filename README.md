@@ -8,7 +8,6 @@ TinyApp is a full stack web application built with Node and Express that allows 
 !["screenshot of editing the long url"](https://github.com/arianah75/tinyapp/blob/master/doc/Edit.png?raw=true)
 !["screenshot of homepage and saved urls"](https://github.com/arianah75/tinyapp/blob/master/doc/Homepage.png?raw=true)
 !["screenshot of login page"](https://github.com/arianah75/tinyapp/blob/master/doc/LogIn.PNG?raw=true)
-!["screenshot of login page"](https://github.com/arianah75/tinyapp/blob/master/doc/LogIn.PNG?raw=true)
 
 ## Dependencies
 
