@@ -1,91 +1,92 @@
-const express = require("express");
+// requirements
+const express = require('express');
 const app = express();
 const PORT = 8080; // default port 8080
-const cookieSession = require("cookie-session");
-const bcrypt = require("bcryptjs");
-const { users, urlDatabase } = require("./db");
+const cookieSession = require('cookie-session');
+const bcrypt = require('bcryptjs');
+const { users, urlDatabase } = require('./db');
 const {
   getUserByEmail,
   urlsForUser,
   generateRandomString,
-} = require("./helper");
-
-app.set("view engine", "ejs");
+} = require('./helper');
+// middleware
+app.set('view engine', 'ejs');
 app.use(
   cookieSession({
-    name: "session",
-    keys: ["key1", "key2"],
+    name: 'session',
+    keys: ['key1', 'key2'],
   })
 );
-app.use(express.urlencoded({ extended: true })); // middleware
+app.use(express.urlencoded({ extended: true }));
 
 // Login page
-app.get("/login", (req, res) => {
+app.get('/login', (req, res) => {
   const userId = req.session.user_id;
   const user = users[userId];
   if (user) {
-    return res.redirect("/urls");
+    return res.redirect('/urls');
   }
   const templateVars = {
     user: user,
   };
-  res.render("login", templateVars);
+  res.render('login', templateVars);
 });
 
 // Registration page
-app.get("/register", (req, res) => {
+app.get('/register', (req, res) => {
   const userId = req.session.user_id;
   const user = users[userId];
   const templateVars = {
     user: user,
   };
-  res.render("register", templateVars);
+  res.render('register', templateVars);
 });
 
 // Create new URL page
-app.get("/urls/new", (req, res) => {
+app.get('/urls/new', (req, res) => {
   if (!req.session.user_id) {
-    return res.redirect("/login");
+    return res.redirect('/login');
   }
   const user = users[req.session.user_id];
   const templateVars = {
     user: user,
   };
-  res.render("urls_new", templateVars);
+  res.render('urls_new', templateVars);
 });
 
 // URL list page
-app.get("/urls", (req, res) => {
+app.get('/urls', (req, res) => {
   const userId = req.session.user_id;
   const user = users[userId];
 
   if (!user) {
-    return res.status(401).send("Please log in to view your URLs.");
+    return res.status(401).send('Please log in to view your URLs.');
   }
   const userUrls = urlsForUser(userId, urlDatabase);
   const templateVars = {
     urls: userUrls,
     user: user,
   };
-  res.render("urls_index", templateVars);
+  res.render('urls_index', templateVars);
 });
 
 // URL edit page
-app.get("/urls/:shortURL", (req, res) => {
+app.get('/urls/:shortURL', (req, res) => {
   const userId = req.session.user_id;
   const shortURL = req.params.shortURL;
   const urlData = urlDatabase[shortURL];
 
   if (!urlData) {
-    return res.status(404).send("URL not found.");
+    return res.status(404).send('URL not found.');
   }
 
   if (!userId) {
-    return res.status(401).send("Please log in to edit URLs.");
+    return res.status(401).send('Please log in to edit URLs.');
   }
 
   if (urlData.userID !== userId) {
-    return res.status(403).send("You do not have permission to edit this URL.");
+    return res.status(403).send('You do not have permission to edit this URL.');
   }
 
   const user = users[userId];
@@ -95,62 +96,62 @@ app.get("/urls/:shortURL", (req, res) => {
     user: user,
   };
 
-  res.render("urls_show", templateVars);
+  res.render('urls_show', templateVars);
 });
 
 // URL redirection
-app.get("/u/:shortURL", (req, res) => {
+app.get('/u/:shortURL', (req, res) => {
   const urlData = urlDatabase[req.params.shortURL];
 
   if (!urlData) {
-    return res.status(404).send("URL not found.");
+    return res.status(404).send('URL not found.');
   }
 
   res.redirect(urlData.longURL);
 });
 
 // Redirect when we have no endpoint
-app.get("/", (req, res) => {
+app.get('/', (req, res) => {
   if (req.session.user_id) {
-    res.redirect("/urls");
+    res.redirect('/urls');
   } else {
-    res.redirect("/login");
+    res.redirect('/login');
   }
 });
 
 // Login handler
-app.post("/login", (req, res) => {
+app.post('/login', (req, res) => {
   const { email, password } = req.body;
   const userFound = getUserByEmail(email, users);
 
   if (!userFound || !bcrypt.compareSync(password, userFound.password)) {
-    res.status(403).send("Incorrect email or password.");
+    res.status(403).send('Incorrect email or password.');
     return;
   }
 
   req.session.user_id = userFound.id;
-  res.redirect("/urls");
+  res.redirect('/urls');
 });
 
 // Logout handler
-app.post("/logout", (req, res) => {
+app.post('/logout', (req, res) => {
   req.session = null;
-  res.redirect("/login");
+  res.redirect('/login');
 });
 
 // Registration handler
-app.post("/register", (req, res) => {
+app.post('/register', (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    res.status(400).send("Email and password cannot be empty.");
+    res.status(400).send('Email and password cannot be empty.');
     return;
   }
 
   const userFound = getUserByEmail(email, users);
 
   if (userFound) {
-    res.status(400).send("Email already registered.");
+    res.status(400).send('Email already registered.');
     return;
   }
 
@@ -164,15 +165,15 @@ app.post("/register", (req, res) => {
   };
 
   req.session.user_id = userRandomID;
-  res.redirect("/urls");
+  res.redirect('/urls');
 });
 
 // Add new URL handler
-app.post("/urls", (req, res) => {
+app.post('/urls', (req, res) => {
   const userId = req.session.user_id;
 
   if (!userId) {
-    return res.status(401).send("Please log in to create a new URL.");
+    return res.status(401).send('Please log in to create a new URL.');
   }
 
   const longURL = req.body.longURL;
@@ -187,31 +188,31 @@ app.post("/urls", (req, res) => {
 });
 
 // Update URL handler
-app.post("/urls/:shortURL", (req, res) => {
+app.post('/urls/:shortURL', (req, res) => {
   const userId = req.session.user_id;
   const shortURL = req.params.shortURL;
   const urlData = urlDatabase[shortURL];
 
   if (urlData.userID !== userId) {
-    return res.status(403).send("Unauthorized access.");
+    return res.status(403).send('Unauthorized access.');
   }
 
   urlData.longURL = req.body.longURL;
-  res.redirect("/urls");
+  res.redirect('/urls');
 });
 
 // Delete URL handler
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.post('/urls/:shortURL/delete', (req, res) => {
   const userId = req.session.user_id;
   const shortURL = req.params.shortURL;
   const urlData = urlDatabase[shortURL];
 
   if (urlData.userID !== userId) {
-    return res.status(403).send("Unauthorized access.");
+    return res.status(403).send('Unauthorized access.');
   }
 
   delete urlDatabase[shortURL];
-  res.redirect("/urls");
+  res.redirect('/urls');
 });
 
 // Server start
